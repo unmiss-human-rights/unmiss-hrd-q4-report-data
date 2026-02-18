@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Maps – UNMISS HRD Q4 2025</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/data.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/maps.js" defer></script>
+<style>
+  .map-tabs { display:flex; gap:6px; margin-bottom:20px; }
+  .map-tab-btn {
+    padding:9px 22px; border-radius:8px; border:1px solid var(--border);
+    background:transparent; color:var(--text-muted); font-size:13px;
+    font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.15s;
+  }
+  .map-tab-btn.active {
+    background:rgba(56,189,248,0.12); color:var(--accent);
+    border-color:rgba(56,189,248,0.3);
+  }
+  .map-tab-btn:hover { background:var(--bg-card2); color:var(--text); }
+  .map-panel { display:none; }
+  .map-panel.active { display:block; }
+  #map, #sgbv-map { height:560px; border-radius:14px; border:1px solid var(--border); }
+  .map-controls {
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    margin-bottom:16px;
+  }
+  .map-select {
+    padding:6px 12px; border-radius:8px;
+    border:1px solid var(--border); background:var(--bg-card2);
+    color:var(--text); font-size:12px; font-family:inherit; cursor:pointer;
+    outline:none;
+  }
+  .map-select:focus { border-color:var(--accent); }
+  .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; color:var(--text-muted); }
+  .legend-circle { border-radius:50%; border:1px solid rgba(255,255,255,0.2); flex-shrink:0; }
+  .stat-card {
+    background:var(--bg-card2); border:1px solid var(--border);
+    border-radius:10px; padding:14px 16px;
+  }
+  .stat-card-label { font-size:11px; color:var(--text-muted); margin-bottom:4px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+  .stat-card-val { font-size:20px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:var(--text); }
+  .stat-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <img src="assets/logo.png" alt="UNMISS HRD"/>
+    <div class="brand-text">
+      <span class="brand-title">UNMISS Human Rights Division</span>
+      <span class="brand-sub">Violence Against Civilians — 2025 Dashboard</span>
+    </div>
+  </a>
+  <div class="navbar-divider"></div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">📊 Overview</a>
+    <a class="nav-link" href="gender.html">⚧ Gender</a>
+    <a class="nav-link" href="perpetrators.html">🎯 Perpetrators</a>
+    <a class="nav-link" href="geographic.html">📍 Geographic</a>
+    <a class="nav-link" href="sgbv.html">🔴 SGBV</a>
+    <div class="dropdown">
+      <a class="nav-link active" href="maps.html">🗺 Maps ▾</a>
+      <div class="dropdown-menu"><div class="dropdown-menu-inner">
+        <a class="dropdown-item active" href="maps.html#casualty">💛 Casualty Map</a>
+        <a class="dropdown-item" href="maps.html#sgbv">🔴 SGBV Map</a>
+      </div></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="container page-header-inner">
+    <div class="page-tag">🗺 Interactive Maps</div>
+    <h1 class="page-title">Maps — <span>Spatial Analysis</span></h1>
+    <p class="page-subtitle">
+      Interactive maps showing the geographic distribution of civilian casualties and SGBV cases
+      across South Sudan. Bubble size represents victim count. Use filters to explore by quarter,
+      violation type, or perpetrator group.
+    </p>
+    <div class="page-meta">
+      <div class="meta-item">📍 <strong>Data:</strong> County & Payam level coordinates</div>
+      <div class="meta-item">🔵 <strong>Bubble size:</strong> Proportional to victim count</div>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+<div class="container">
+
+  <!-- Map tabs -->
+  <div class="map-tabs">
+    <button class="map-tab-btn active" onclick="showMapTab('casualty',this)">Casualty Map</button>
+    <button class="map-tab-btn" onclick="showMapTab('sgbv-panel',this)">🔴 SGBV Map</button>
+  </div>
+
+  <!-- Casualty Map -->
+  <div class="map-panel active" id="casualty">
+    <div class="map-controls">
+      <span class="filter-label">Quarter:</span>
+      <select class="map-select" id="cas-quarter-filter" onchange="updateCasualtyMap()">
+        <option value="Q4">Q4 2025</option>
+        <option value="all">All Quarters</option>
+        <option value="Q1">Q1 2025</option>
+        <option value="Q2">Q2 2025</option>
+        <option value="Q3">Q3 2025</option>
+      </select>
+      <span class="filter-label" style="margin-left:8px">Violation:</span>
+      <select class="map-select" id="cas-violation-filter" onchange="updateCasualtyMap()">
+        <option value="total">All Violations</option>
+        <option value="killed">Killed</option>
+        <option value="injured">Injured</option>
+        <option value="abducted">Abducted</option>
+        <option value="crsv">CRSV</option>
+      </select>
+      <span class="filter-label" style="margin-left:8px">Perpetrator:</span>
+      <select class="map-select" id="cas-perp-filter" onchange="updateCasualtyMap()">
+        <option value="all">All Groups</option>
+        <option value="Community-based Militias">Community Militias</option>
+        <option value="Conventional Parties">Conventional Parties</option>
+        <option value="Unidentified/Opportunistic">Unidentified/Opportunistic</option>
+      </select>
+    </div>
+
+    <div class="map-layout">
+      <div>
+        <div id="map"></div>
+      </div>
+      <div class="map-sidebar">
+        <div class="map-legend-box">
+          <div class="card-title">Legend</div>
+          <div style="margin-bottom:12px">
+            <div class="legend-row"><div class="legend-circle" style="width:8px;height:8px;background:#f43f5e"></div> Killed</div>
+            <div class="legend-row"><div class="legend-circle" style="width:8px;height:8px;background:#fb923c"></div> Injured</div>
+            <div class="legend-row"><div class="legend-circle" style="width:8px;height:8px;background:#c084fc"></div> Abducted</div>
+            <div class="legend-row"><div class="legend-circle" style="width:8px;height:8px;background:#34d399"></div> CRSV</div>
+            <hr style="border-color:var(--border);margin:10px 0"/>
+            <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;background:rgba(251,191,36,0.7)"></div> Community Militias</div>
+            <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;background:rgba(129,140,248,0.7)"></div> Conventional Parties</div>
+            <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;background:rgba(52,211,153,0.7)"></div> Unidentified</div>
+            <hr style="border-color:var(--border);margin:10px 0"/>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Bubble Size = Victims</div>
+            <div style="display:flex;gap:10px;align-items:flex-end">
+              <div style="text-align:center"><div class="legend-circle" style="width:14px;height:14px;background:rgba(244,63,94,0.5);margin:auto"></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">1-10</div></div>
+              <div style="text-align:center"><div class="legend-circle" style="width:22px;height:22px;background:rgba(244,63,94,0.5);margin:auto"></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">10-50</div></div>
+              <div style="text-align:center"><div class="legend-circle" style="width:34px;height:34px;background:rgba(244,63,94,0.5);margin:auto"></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">50+</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-legend-box">
+          <div class="card-title">Map Summary</div>
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-card-label">Locations</div>
+              <div class="stat-card-val" id="map-loc-count">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Total Victims</div>
+              <div class="stat-card-val" id="map-total-count">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Killed</div>
+              <div class="stat-card-val" id="map-killed-count" style="color:var(--killed)">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Injured</div>
+              <div class="stat-card-val" id="map-injured-count" style="color:var(--injured)">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-legend-box">
+          <div class="card-title">Top 5 Hotspots (Q4)</div>
+          <div id="map-top-hotspots" style="font-size:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SGBV Map -->
+  <div class="map-panel" id="sgbv-panel">
+    <div class="map-controls">
+      <span class="filter-label">Quarter:</span>
+      <select class="map-select" id="sgbv-quarter-filter" onchange="updateSGBVMap()">
+        <option value="Q4">Q4 2025</option>
+        <option value="all">All Quarters</option>
+      </select>
+    </div>
+
+    <div class="map-layout">
+      <div>
+        <div id="sgbv-map"></div>
+      </div>
+      <div class="map-sidebar">
+        <div class="map-legend-box">
+          <div class="card-title">SGBV Legend</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Bubble = documented SGBV cases</div>
+          <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;background:rgba(244,114,182,0.7)"></div> SGBV cases</div>
+          <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;background:rgba(52,211,153,0.7)"></div> CRSV cases</div>
+          <hr style="border-color:var(--border);margin:10px 0"/>
+          <div style="display:flex;gap:10px;align-items:flex-end;margin-top:6px">
+            <div style="text-align:center"><div class="legend-circle" style="width:12px;height:12px;background:rgba(244,114,182,0.6);margin:auto"></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">1-5</div></div>
+            <div style="text-align:center"><div class="legend-circle" style="width:20px;height:20px;background:rgba(244,114,182,0.6);margin:auto"></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">5-15</div></div>
+            <div style="text-align:center"><div class="legend-circle" style="width:30px;height:30px;background:rgba(244,114,182,0.6);margin:auto"></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">15+</div></div>
+          </div>
+        </div>
+
+        <div class="map-legend-box">
+          <div class="card-title">SGBV Summary</div>
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-card-label">SGBV Locations</div>
+              <div class="stat-card-val" id="sgbv-loc-count">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">SGBV Cases</div>
+              <div class="stat-card-val" id="sgbv-total-count" style="color:var(--female)">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">CRSV Cases</div>
+              <div class="stat-card-val" id="sgbv-crsv-count" style="color:#34d399">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-legend-box">
+          <div class="card-title">SGBV Hotspots (Q4)</div>
+          <div id="sgbv-top-hotspots" style="font-size:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <p>© 2025 <strong>UNMISS Human Rights Division</strong> · Violence Against Civilians Dashboard</p>
+    <p>Coordinates reflect county/payam centroid positions from UNMISS HRD incident data</p>
+  </div>
+</footer>
+
+<script>
+function showMapTab(id, btn) {
+  document.querySelectorAll('.map-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.map-tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  // Invalidate map sizes after display
+  setTimeout(()=>{
+    if(id==='casualty' && window._casualtyMap) window._casualtyMap.invalidateSize();
+    if(id==='sgbv-panel' && window._sgbvMap) { window._sgbvMap.invalidateSize(); }
+  }, 80);
+  // Build SGBV map lazily on first show
+  if (id==='sgbv-panel' && !window._sgbvMap && typeof buildSGBVMap === 'function') {
+    setTimeout(buildSGBVMap, 100);
+  }
+  // Update browser hash
+  history.replaceState(null, '', id === 'casualty' ? '#casualty' : '#sgbv');
+}
+
+// Handle hash on page load — e.g. maps.html#sgbv opens SGBV tab directly
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash;
+  const tabs = document.querySelectorAll('.map-tab-btn');
+  if (hash === '#sgbv') {
+    // Activate SGBV tab button
+    showMapTab('sgbv-panel', tabs[1]);
+  }
+});
+</script>
+</body>
+</html>

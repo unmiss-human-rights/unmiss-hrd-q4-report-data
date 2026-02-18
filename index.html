@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UNMISS HRD – Q4 2025 Violence Dashboard</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+<script src="js/data.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/overview.js" defer></script>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <img src="assets/logo.png" alt="UNMISS HRD Logo"/>
+    <div class="brand-text">
+      <span class="brand-title">UNMISS Human Rights Division</span>
+      <span class="brand-sub">Violence Against Civilians — 2025 Dashboard</span>
+    </div>
+  </a>
+  <div class="navbar-divider"></div>
+  <div class="nav-links">
+    <a class="nav-link active" href="index.html">📊 Overview</a>
+    <a class="nav-link" href="gender.html">⚧ Gender</a>
+    <a class="nav-link" href="perpetrators.html">🎯 Perpetrators</a>
+    <a class="nav-link" href="geographic.html">📍 Geographic</a>
+    <a class="nav-link" href="sgbv.html">🔴 SGBV</a>
+    <div class="dropdown">
+      <a class="nav-link" href="maps.html">🗺 Maps ▾</a>
+      <div class="dropdown-menu"><div class="dropdown-menu-inner">
+        <a class="dropdown-item" href="maps.html#casualty">💛 Casualty Map</a>
+        <a class="dropdown-item" href="maps.html#sgbv">🔴 SGBV Map</a>
+      </div></div>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container page-header-inner">
+    <div class="page-tag">📊 Q4 2025 — October to December</div>
+    <h1 class="page-title">Violence Affecting Civilians — <span>Overview</span></h1>
+    <p class="page-subtitle">
+      Comprehensive analysis of conflict-related civilian casualties documented by UNMISS Human Rights Division
+      across South Sudan during the fourth quarter of 2025.
+    </p>
+    <div class="page-meta">
+      <div class="meta-item">📅 <strong>Period:</strong> October – December 2025</div>
+      <div class="meta-item">📌 <strong>Coverage:</strong> 10 States, 51+ Counties</div>
+      <div class="meta-item">📋 <strong>Source:</strong> UNMISS HRD Incident Database</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<main class="main">
+<div class="container">
+
+  <!-- KPI Row -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(56,189,248,0.12)">💥</span>
+      Q4 2025 Key Casualties
+    </div>
+    <div class="grid grid-kpi" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+      <div class="kpi-card total fade-up stagger-1">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-label">Total Victims</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">
+          <span id="kpi-total-change"></span>
+          <span>vs Q3 2025</span>
+        </div>
+      </div>
+      <div class="kpi-card killed fade-up stagger-1">
+        <div class="kpi-icon">☠</div>
+        <div class="kpi-label">Killed</div>
+        <div class="kpi-value" id="kpi-killed">—</div>
+        <div class="kpi-sub"><span id="kpi-killed-pct" class="kpi-pct"></span> of total</div>
+      </div>
+      <div class="kpi-card injured fade-up stagger-2">
+        <div class="kpi-icon">🩹</div>
+        <div class="kpi-label">Injured</div>
+        <div class="kpi-value" id="kpi-injured">—</div>
+        <div class="kpi-sub"><span id="kpi-injured-pct" class="kpi-pct"></span> of total</div>
+      </div>
+      <div class="kpi-card abducted fade-up stagger-3">
+        <div class="kpi-icon">⛓</div>
+        <div class="kpi-label">Abducted</div>
+        <div class="kpi-value" id="kpi-abducted">—</div>
+        <div class="kpi-sub"><span id="kpi-abducted-pct" class="kpi-pct"></span> of total</div>
+      </div>
+      <div class="kpi-card crsv fade-up stagger-4">
+        <div class="kpi-icon">⚠</div>
+        <div class="kpi-label">CRSV</div>
+        <div class="kpi-value" id="kpi-crsv">—</div>
+        <div class="kpi-sub"><span id="kpi-crsv-pct" class="kpi-pct"></span> of total</div>
+      </div>
+      <div class="kpi-card sgbv fade-up stagger-5">
+        <div class="kpi-icon">🔴</div>
+        <div class="kpi-label">SGBV Cases</div>
+        <div class="kpi-value" id="kpi-sgbv">—</div>
+        <div class="kpi-sub">Sexual &amp; gender-based</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Donut + Violations bar + Quarter summary -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(244,63,94,0.12)">📉</span>
+      Q4 Casualty Breakdown
+    </div>
+    <div class="grid grid-3">
+
+      <!-- Donut -->
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Violation Type Distribution</div>
+            <div class="chart-subtitle">Share of each harm type — Q4 2025</div>
+          </div>
+          <span class="chart-badge q4">Q4 2025</span>
+        </div>
+        <div id="chart-violation-donut" class="plotly-chart"></div>
+      </div>
+
+      <!-- % bars -->
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Casualty Percentages</div>
+            <div class="chart-subtitle">Each form of violence as % of all victims</div>
+          </div>
+        </div>
+        <div id="kpi-bars" style="margin-top:8px"></div>
+        <hr style="border-color:var(--border);margin:16px 0"/>
+        <div class="chart-title" style="margin-bottom:12px">Quarter-on-Quarter Change</div>
+        <div id="qoq-indicators"></div>
+      </div>
+
+      <!-- Gender donut -->
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Victims by Gender/Sex</div>
+            <div class="chart-subtitle">Men · Women · Boys · Girls</div>
+          </div>
+          <span class="chart-badge q4">Q4 2025</span>
+        </div>
+        <div id="chart-gender-donut" class="plotly-chart"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Row: Quarterly comparison grouped bar + area chart -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(251,146,60,0.12)">📅</span>
+      Quarterly Trends & Comparisons
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Victims by Quarter (Q1–Q4 2025)</div>
+            <div class="chart-subtitle">All four major forms of harm</div>
+          </div>
+          <span class="chart-badge yearly">Full Year</span>
+        </div>
+        <div id="chart-quarterly-grouped" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Total Victims — Quarterly Trend</div>
+            <div class="chart-subtitle">Stacked area showing all violations</div>
+          </div>
+          <span class="chart-badge yearly">2025</span>
+        </div>
+        <div id="chart-quarterly-stacked" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Trend -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(129,140,248,0.12)">📈</span>
+      Monthly Trend — Full Year 2025
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Monthly Civilian Casualties by Violation Type</div>
+          <div class="chart-subtitle">January through December 2025 — Q4 months highlighted</div>
+        </div>
+        <span class="chart-badge yearly">2025</span>
+      </div>
+      <div id="chart-monthly-trend" class="plotly-chart"></div>
+    </div>
+  </div>
+
+  <!-- Row: Perpetrator donut + State bar -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(251,191,36,0.12)">🎯</span>
+      Perpetrators & Geographic Overview
+    </div>
+    <div class="grid grid-3">
+
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Victims by Perpetrator Group</div>
+            <div class="chart-subtitle">Q4 2025 — share by actor type</div>
+          </div>
+          <span class="chart-badge q4">Q4</span>
+        </div>
+        <div id="chart-perp-donut" class="plotly-chart"></div>
+      </div>
+
+      <div class="chart-wrap" style="grid-column: span 2">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Most Affected States — Q4 2025</div>
+            <div class="chart-subtitle">Total civilian victims by state (stacked by violation)</div>
+          </div>
+          <span class="chart-badge q4">Q4</span>
+        </div>
+        <div id="chart-state-bar" class="plotly-chart"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Historical trend -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(52,211,153,0.12)">🔄</span>
+      Historical Yearly Trend by Perpetrator Group
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Monthly Victims 2023 – 2025 by Perpetrator Group</div>
+          <div class="chart-subtitle">Multi-year comparison showing changing violence patterns</div>
+        </div>
+        <span class="chart-badge yearly">2023–2025</span>
+      </div>
+      <div id="chart-historical" class="plotly-chart"></div>
+    </div>
+  </div>
+
+  <!-- Perpetrator quarterly comparison -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(192,132,252,0.12)">⚔</span>
+      Perpetrator Group — Quarterly Comparison
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Victims by Perpetrator Across Quarters</div>
+            <div class="chart-subtitle">How each actor's impact changed Q1 through Q4</div>
+          </div>
+        </div>
+        <div id="chart-perp-quarterly" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Quarterly Totals with Gender Split</div>
+            <div class="chart-subtitle">Men · Women · Boys · Girls across all four quarters</div>
+          </div>
+        </div>
+        <div id="chart-quarterly-gender" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Insights -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(56,189,248,0.12)">💡</span>
+      Key Insights — Q4 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="insight-box" id="insight-main"></div>
+      <div class="insight-box" id="insight-secondary"></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <p>© 2025 <strong>UNMISS Human Rights Division</strong> · Violence Against Civilians Dashboard</p>
+    <p>Data: UNMISS HRD Incident Database 2025 · Non-exhaustive; likely underrepresents actual harm</p>
+  </div>
+</footer>
+
+</body>
+</html>

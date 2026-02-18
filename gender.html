@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gender Analysis – UNMISS HRD Q4 2025</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+<script src="js/data.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/gender.js" defer></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <img src="assets/logo.png" alt="UNMISS HRD"/>
+    <div class="brand-text">
+      <span class="brand-title">UNMISS Human Rights Division</span>
+      <span class="brand-sub">Violence Against Civilians — 2025 Dashboard</span>
+    </div>
+  </a>
+  <div class="navbar-divider"></div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">📊 Overview</a>
+    <a class="nav-link active" href="gender.html">⚧ Gender</a>
+    <a class="nav-link" href="perpetrators.html">🎯 Perpetrators</a>
+    <a class="nav-link" href="geographic.html">📍 Geographic</a>
+    <a class="nav-link" href="sgbv.html">🔴 SGBV</a>
+    <div class="dropdown">
+      <a class="nav-link" href="maps.html">🗺 Maps ▾</a>
+      <div class="dropdown-menu"><div class="dropdown-menu-inner">
+        <a class="dropdown-item" href="maps.html#casualty">💛 Casualty Map</a>
+        <a class="dropdown-item" href="maps.html#sgbv">🔴 SGBV Map</a>
+      </div></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="container page-header-inner">
+    <div class="page-tag">⚧ Gender Disaggregated Analysis</div>
+    <h1 class="page-title">Gender & Sex — <span>Victim Analysis</span></h1>
+    <p class="page-subtitle">
+      Breakdown of Q4 2025 civilian casualties by gender and sex across all violation types,
+      states, and perpetrator groups. Compares trends across all 2025 quarters.
+    </p>
+    <div class="page-meta">
+      <div class="meta-item">👤 <strong>Categories:</strong> Men · Women · Boys · Girls</div>
+      <div class="meta-item">📅 <strong>Period:</strong> October – December 2025</div>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+<div class="container">
+
+  <!-- Gender KPIs -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(244,114,182,0.12)">👥</span>
+      Q4 2025 — Victims by Gender/Sex
+    </div>
+    <div class="grid grid-kpi">
+      <div class="kpi-card male fade-up stagger-1">
+        <div class="kpi-icon">👨</div>
+        <div class="kpi-label">Men</div>
+        <div class="kpi-value" id="kpi-male">0</div>
+        <div class="kpi-sub"><span id="kpi-male-pct"></span> of all victims</div>
+      </div>
+      <div class="kpi-card female fade-up stagger-2">
+        <div class="kpi-icon">👩</div>
+        <div class="kpi-label">Women</div>
+        <div class="kpi-value" id="kpi-female">0</div>
+        <div class="kpi-sub"><span id="kpi-female-pct"></span> of all victims</div>
+      </div>
+      <div class="kpi-card boys fade-up stagger-3">
+        <div class="kpi-icon">👦</div>
+        <div class="kpi-label">Boys</div>
+        <div class="kpi-value" id="kpi-boys">0</div>
+        <div class="kpi-sub"><span id="kpi-boys-pct"></span> of all victims</div>
+      </div>
+      <div class="kpi-card girls fade-up stagger-4">
+        <div class="kpi-icon">👧</div>
+        <div class="kpi-label">Girls</div>
+        <div class="kpi-value" id="kpi-girls">0</div>
+        <div class="kpi-sub"><span id="kpi-girls-pct"></span> of all victims</div>
+      </div>
+      <div class="kpi-card total fade-up stagger-5">
+        <div class="kpi-icon">👶</div>
+        <div class="kpi-label">Children (Boys+Girls)</div>
+        <div class="kpi-value" id="kpi-children">0</div>
+        <div class="kpi-sub"><span id="kpi-children-pct"></span> of all victims</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender donut + Gender by violation bars + Gender stacked bar -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(96,165,250,0.12)">🔵</span>
+      Gender Distribution — Q4 2025
+    </div>
+    <div class="grid grid-3">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Overall Gender Distribution</div>
+            <div class="chart-subtitle">Share of each gender/sex group — Q4 2025</div>
+          </div>
+          <span class="chart-badge q4">Q4</span>
+        </div>
+        <div id="chart-gender-pie" class="plotly-chart"></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Gender within Each Violation</div>
+            <div class="chart-subtitle">How men, women, boys & girls are affected differently</div>
+          </div>
+        </div>
+        <div id="chart-gender-by-violation" class="plotly-chart"></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Leading Harm by Gender</div>
+            <div class="chart-subtitle">Primary violation type for each gender group</div>
+          </div>
+        </div>
+        <div id="chart-harm-by-gender" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender percentage heatmap + radar -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(192,132,252,0.12)">🎯</span>
+      Gender × Violation Deep Dive
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Violation Profile per Gender — % Share</div>
+            <div class="chart-subtitle">For each gender, what percentage suffered each violation?</div>
+          </div>
+        </div>
+        <div id="chart-gender-violation-heatmap" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Vulnerability Radar — Gender × Violation</div>
+            <div class="chart-subtitle">Normalised risk profile across harm types</div>
+          </div>
+        </div>
+        <div id="chart-gender-radar" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender by state -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(251,146,60,0.12)">🗺</span>
+      Gender by State — Q4 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Victims by State — Gender Breakdown</div>
+            <div class="chart-subtitle">Stacked bar showing gender composition per state</div>
+          </div>
+        </div>
+        <div id="chart-state-gender-stacked" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Women & Children Victims by State</div>
+            <div class="chart-subtitle">Number of female and child victims per state</div>
+          </div>
+        </div>
+        <div id="chart-state-women-children" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender by perpetrator -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(251,191,36,0.12)">⚔</span>
+      Gender by Perpetrator Group — Q4 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Gender Breakdown by Perpetrator</div>
+            <div class="chart-subtitle">Who harms which gender groups the most?</div>
+          </div>
+        </div>
+        <div id="chart-perp-gender-stacked" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Violation Type × Gender by Perpetrator</div>
+            <div class="chart-subtitle">For each perpetrator group — killed vs injured vs abducted vs CRSV split by gender</div>
+          </div>
+        </div>
+        <div id="chart-perp-viol-gender" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quarterly gender trends -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(52,211,153,0.12)">📈</span>
+      Quarterly Gender Trends — 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Gender Totals Across All Quarters</div>
+            <div class="chart-subtitle">How each gender group's victimisation changed Q1–Q4</div>
+          </div>
+        </div>
+        <div id="chart-quarterly-gender-line" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Gender Share (%) Across Quarters</div>
+            <div class="chart-subtitle">Normalised view — proportion of each gender per quarter</div>
+          </div>
+        </div>
+        <div id="chart-quarterly-gender-pct" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Children specific analysis -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(147,197,253,0.12)">👶</span>
+      Child Victims — Q4 2025
+    </div>
+    <div class="grid grid-3">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Boys vs Girls — Violation Profile</div>
+            <div class="chart-subtitle">How harm differs between boys and girls</div>
+          </div>
+        </div>
+        <div id="chart-children-violation" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Children by Perpetrator Group</div>
+            <div class="chart-subtitle">Which actor harms children the most?</div>
+          </div>
+        </div>
+        <div id="chart-children-perp" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Child Victims by State (Top 8)</div>
+            <div class="chart-subtitle">Boys + Girls combined per state</div>
+          </div>
+        </div>
+        <div id="chart-children-state" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(56,189,248,0.12)">💡</span>
+      Gender Analysis Insights
+    </div>
+    <div class="grid grid-2">
+      <div class="insight-box" id="insight-gender-1"></div>
+      <div class="insight-box" id="insight-gender-2"></div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <p>© 2025 <strong>UNMISS Human Rights Division</strong> · Violence Against Civilians Dashboard</p>
+    <p>Data: UNMISS HRD Incident Database 2025 · Non-exhaustive; likely underrepresents actual harm</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Geographic Analysis – UNMISS HRD Q4 2025</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+<script src="js/data.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/geographic.js" defer></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <img src="assets/logo.png" alt="UNMISS HRD"/>
+    <div class="brand-text">
+      <span class="brand-title">UNMISS Human Rights Division</span>
+      <span class="brand-sub">Violence Against Civilians — 2025 Dashboard</span>
+    </div>
+  </a>
+  <div class="navbar-divider"></div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">📊 Overview</a>
+    <a class="nav-link" href="gender.html">⚧ Gender</a>
+    <a class="nav-link" href="perpetrators.html">🎯 Perpetrators</a>
+    <a class="nav-link active" href="geographic.html">📍 Geographic</a>
+    <a class="nav-link" href="sgbv.html">🔴 SGBV</a>
+    <div class="dropdown">
+      <a class="nav-link" href="maps.html">🗺 Maps ▾</a>
+      <div class="dropdown-menu"><div class="dropdown-menu-inner">
+        <a class="dropdown-item" href="maps.html#casualty">💛 Casualty Map</a>
+        <a class="dropdown-item" href="maps.html#sgbv">🔴 SGBV Map</a>
+      </div></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="container page-header-inner">
+    <div class="page-tag">📍 State · County · Payam Analysis</div>
+    <h1 class="page-title">Geographic — <span>Hotspot Analysis</span></h1>
+    <p class="page-subtitle">
+      State-level, county-level, and payam-level breakdown of Q4 2025 civilian casualties.
+      Identify the most affected areas and compare with previous quarters.
+    </p>
+    <div class="page-meta">
+      <div class="meta-item">🗺 <strong>Coverage:</strong> 10 States · 51 Counties · 100+ Payams</div>
+      <div class="meta-item">📅 <strong>Period:</strong> Q4 2025 + Quarterly Comparison</div>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+<div class="container">
+
+  <!-- State KPIs -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(56,189,248,0.12)">🏆</span>
+      Most Affected Areas — Q4 2025
+    </div>
+    <div class="grid grid-kpi" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <div class="kpi-card total fade-up stagger-1">
+        <div class="kpi-icon">🏴</div>
+        <div class="kpi-label">Most Affected State</div>
+        <div class="kpi-value" id="kpi-top-state" style="font-size:20px;padding-top:4px">—</div>
+        <div class="kpi-sub" id="kpi-top-state-sub"></div>
+      </div>
+      <div class="kpi-card killed fade-up stagger-2">
+        <div class="kpi-icon">📍</div>
+        <div class="kpi-label">Most Affected County</div>
+        <div class="kpi-value" id="kpi-top-county" style="font-size:20px;padding-top:4px">—</div>
+        <div class="kpi-sub" id="kpi-top-county-sub"></div>
+      </div>
+      <div class="kpi-card injured fade-up stagger-3">
+        <div class="kpi-icon">🏘</div>
+        <div class="kpi-label">Most Affected Payam</div>
+        <div class="kpi-value" id="kpi-top-payam" style="font-size:20px;padding-top:4px">—</div>
+        <div class="kpi-sub" id="kpi-top-payam-sub"></div>
+      </div>
+      <div class="kpi-card abducted fade-up stagger-4">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-label">Active Counties</div>
+        <div class="kpi-value" id="kpi-counties">0</div>
+        <div class="kpi-sub">with documented Q4 incidents</div>
+      </div>
+      <div class="kpi-card crsv fade-up stagger-5">
+        <div class="kpi-icon">🏘</div>
+        <div class="kpi-label">Active Payams</div>
+        <div class="kpi-value" id="kpi-payams">0</div>
+        <div class="kpi-sub">with documented Q4 incidents</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State overview -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(244,63,94,0.12)">🗺</span>
+      State-Level Analysis — Q4 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Total Victims by State</div>
+            <div class="chart-subtitle">Ranked by Q4 casualty count</div>
+          </div>
+          <span class="chart-badge q4">Q4</span>
+        </div>
+        <div id="chart-state-total" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">State % Share of National Total</div>
+            <div class="chart-subtitle">Which states account for the most harm?</div>
+          </div>
+        </div>
+        <div id="chart-state-pct" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State by violation + perpetrator -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(251,146,60,0.12)">📊</span>
+      State Breakdown — Violation & Perpetrator
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">State × Violation Type</div>
+            <div class="chart-subtitle">Stacked: killed / injured / abducted / CRSV per state</div>
+          </div>
+        </div>
+        <div id="chart-state-violation" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">State × Perpetrator Group</div>
+            <div class="chart-subtitle">Who is the dominant actor in each state?</div>
+          </div>
+        </div>
+        <div id="chart-state-perpetrator" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State by gender + quarterly comparison -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(244,114,182,0.12)">⚧</span>
+      State — Gender & Quarterly Trends
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">State × Gender/Sex Breakdown</div>
+            <div class="chart-subtitle">Men · Women · Boys · Girls per state</div>
+          </div>
+        </div>
+        <div id="chart-state-gender" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">State Quarterly Trend — Top 5 States</div>
+            <div class="chart-subtitle">How victims changed across all 4 quarters in 2025</div>
+          </div>
+        </div>
+        <div id="chart-state-quarterly-line" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State quarterly heatmap -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(52,211,153,0.12)">🌡</span>
+      State × Quarter Heatmap
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Victim Counts by State and Quarter</div>
+          <div class="chart-subtitle">Identify where violence increased or decreased across quarters</div>
+        </div>
+        <span class="chart-badge yearly">2025</span>
+      </div>
+      <div id="chart-state-quarter-heatmap" class="plotly-chart"></div>
+    </div>
+  </div>
+
+  <!-- Top counties -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(251,191,36,0.12)">🏙</span>
+      County-Level Hotspots — Q4 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Top 15 Most Affected Counties</div>
+            <div class="chart-subtitle">Ranked by total Q4 victims</div>
+          </div>
+          <span class="chart-badge q4">Q4</span>
+        </div>
+        <div id="chart-top-counties" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">County Violation Breakdown — Top 10</div>
+            <div class="chart-subtitle">Killed · Injured · Abducted · CRSV per county</div>
+          </div>
+        </div>
+        <div id="chart-county-violation" class="plotly-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top payams -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(129,140,248,0.12)">🏘</span>
+      Payam-Level Hotspots — Q4 2025
+    </div>
+    <div class="grid grid-2">
+      <div class="chart-wrap">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Top 20 Most Affected Payams</div>
+            <div class="chart-subtitle">Granular sub-county analysis</div>
+          </div>
+          <span class="chart-badge q4">Q4</span>
+        </div>
+        <div id="chart-top-payams" class="plotly-chart"></div>
+      </div>
+      <div class="chart-wrap" style="overflow:auto">
+        <div class="chart-title" style="margin-bottom:12px">Top 20 Counties — Full Data Table</div>
+        <table class="data-table" id="county-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bubble: County total vs state color -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(56,189,248,0.12)">🔵</span>
+      County Bubble Chart — Size = Total Victims
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">County-Level Scatter — All Counties with Q4 Data</div>
+          <div class="chart-subtitle">Bubble size = total victims · Colour = state · Y-axis = killed</div>
+        </div>
+      </div>
+      <div id="chart-county-bubble" class="plotly-chart"></div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="section">
+    <div class="section-title">
+      <span class="section-icon" style="background:rgba(56,189,248,0.12)">💡</span>
+      Geographic Insights
+    </div>
+    <div class="grid grid-2">
+      <div class="insight-box" id="insight-geo-1"></div>
+      <div class="insight-box" id="insight-geo-2"></div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <p>© 2025 <strong>UNMISS Human Rights Division</strong> · Violence Against Civilians Dashboard</p>
+    <p>Data: UNMISS HRD Incident Database 2025 · Non-exhaustive; likely underrepresents actual harm</p>
+  </div>
+</footer>
+</body>
+</html>
