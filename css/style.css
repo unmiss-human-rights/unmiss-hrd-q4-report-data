@@ -357,6 +357,46 @@ img { max-width: 100%; }
 .kpi-card.opportunistic::before { background: var(--opportunistic); }
 .kpi-card.sgbv::before    { background: linear-gradient(90deg, var(--female), var(--girls)); }
 
+/* ── SGBV Note Box (overview page) ─────────────────────────── */
+.sgbv-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: rgba(244,114,182,0.07);
+  border: 1px solid rgba(244,114,182,0.3);
+  border-left: 4px solid var(--female);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+.sgbv-note-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.sgbv-note-body strong {
+  color: var(--text);
+}
+.sgbv-note-count {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--female);
+}
+.sgbv-note-link {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--female);
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.sgbv-note-link:hover { opacity: 1; text-decoration: underline; }
+
 .kpi-label {
   font-size: 11px;
   font-weight: 600;

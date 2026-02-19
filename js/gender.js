@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const setEl    = (id, v)  => { const e = document.getElementById(id); if(e) e.innerHTML = v; };
 
   // ── KPIs ──────────────────────────────────────────────────
+  setCount('kpi-gender-total', total);
   setCount('kpi-male',     g.male);
   setCount('kpi-female',   g.female);
   setCount('kpi-boys',     g.boys);

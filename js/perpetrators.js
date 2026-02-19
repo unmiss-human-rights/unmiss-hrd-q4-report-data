@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const gCols   = [C.male, C.female, C.boys, C.girls];
 
   // ── KPIs ──────────────────────────────────────────────────
+  setCount('kpi-perp-total', q4.total);
+
   PERPS.forEach(p => {
     const total = d.q4_by_perpetrator[p]?.total || 0;
     const key   = p.includes('Community') ? 'militia' : p.includes('Conventional') ? 'conventional' : 'opportunistic';
