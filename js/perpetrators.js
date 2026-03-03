@@ -1,5 +1,12 @@
 /* ============================================================
-   UNMISS HRD – Perpetrators Page Charts
+   UNMISS HRD – Perpetrators Page (perpetrators.html)
+   ============================================================
+
+   Renders: Perpetrator KPIs, donut, violation by perpetrator,
+   state × perpetrator stacked/heatmap, treemap, quarterly bars,
+   top states per perpetrator, gender by perpetrator, insights.
+
+   Depends: D, C, utils
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const d  = D;

@@ -1,5 +1,12 @@
 /* ============================================================
-   UNMISS HRD – SGBV Analysis Page Charts
+   UNMISS HRD – SGBV Analysis Page (sgbv.html)
+   ============================================================
+
+   Renders: SGBV vs CRSV donut/quarterly, gender pie, by state/perpetrator,
+   support service indicators (medical, psychosocial, reported, arrested, pregnancy),
+   SGBV trend, state×quarter heatmap, services by state, insights.
+
+   Depends: D, C, utils (D.sgbv, D.crsv_sgbv)
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const d    = D;

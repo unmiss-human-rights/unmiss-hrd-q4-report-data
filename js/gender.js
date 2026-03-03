@@ -1,5 +1,12 @@
 /* ============================================================
-   UNMISS HRD – Gender Analysis Page Charts
+   UNMISS HRD – Gender Analysis Page (gender.html)
+   ============================================================
+
+   Renders: Gender KPIs, gender pie, gender-by-violation bars,
+   violation heatmap, radar chart, gender by state/perpetrator,
+   quarterly gender trends, children (boys/girls) breakdowns.
+
+   Depends: D, C, utils
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const d  = D;

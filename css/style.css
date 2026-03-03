@@ -1,6 +1,15 @@
 /* ============================================================
    UNMISS HRD Q4 2025 – Violence Dashboard
    Shared Stylesheet
+   ============================================================
+
+   Dark theme, UN blue accent (#009EDB). Covers:
+   - CSS variables (--bg, --accent, violation/gender/state colours)
+   - Layout: navbar, page header, sections, grids, cards
+   - Charts: .chart-wrap, .plotly-chart, download buttons
+   - Tables: .county-table, stat-row
+   - Maps: .map-wrapper, popups, Leaflet overrides
+   - Responsive breakpoints
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');

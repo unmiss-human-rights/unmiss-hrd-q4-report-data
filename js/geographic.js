@@ -1,5 +1,12 @@
 /* ============================================================
-   UNMISS HRD – Geographic Analysis Page Charts
+   UNMISS HRD – Geographic Analysis Page (geographic.html)
+   ============================================================
+
+   Renders: State KPIs, state bar/donut, state × violation/perpetrator/gender,
+   quarterly state line, state × quarter heatmap, top counties/payams,
+   county violation breakdown, bubble chart, data table, insights.
+
+   Depends: D, C, utils (sortedStates, topCounties, topPayams)
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const d  = D;

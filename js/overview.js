@@ -1,5 +1,12 @@
 /* ============================================================
-   UNMISS HRD – Overview Page Charts
+   UNMISS HRD – Overview Page Charts (index.html)
+   ============================================================
+
+   Renders: KPIs, violation/gender donuts, quarterly grouped/stacked charts,
+   monthly trend, perpetrator donut, state stacked bar, historical trend,
+   quarterly perpetrator/gender bars, and insight summaries.
+
+   Depends: D (UNMISS_DATA), C, utils (pct, fmt, donutTrace, etc.)
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -7,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const q4  = d.q4;
   const q3  = d.quarterly['Q3'];
 
-  // ── KPI cards ─────────────────────────────────────────────
+  // KPI cards: total, killed, injured, abducted, crsv, sgbv — with animated counters and % change vs Q3
   const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   const setCount = (id, n) => { const e = document.getElementById(id); if (e) { e.dataset.count = n; animateCounter(e, n); } };
 
@@ -81,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  // ── Violation Donut ───────────────────────────────────────
+  // Violation donut: killed / injured / abducted / CRSV
   Plotly.newPlot('chart-violation-donut', [
     donutTrace(
       ['Killed','Injured','Abducted','CRSV'],

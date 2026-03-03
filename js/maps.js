@@ -1,8 +1,17 @@
 /* ============================================================
-   UNMISS HRD – Maps Page (Leaflet)
+   UNMISS HRD – Maps Page (maps.html)
+   ============================================================
+
+   Leaflet-based maps: casualty map, SGBV map, perpetrator map.
+   Uses CartoDB dark tiles, south-sudan.geojson for boundary.
+   Filters: quarter (Q1–Q4/all), violation, perpetrator.
+   Markers: circle size by victim count; colour by violation/perpetrator.
+   Offset logic avoids overlapping markers at same location.
+
+   Depends: D, Leaflet (L), utils (fmt, pColor)
    ============================================================ */
 
-// State centroid fallbacks (used when no lat/long in data)
+// State centroid fallbacks (used when lat/long missing in incident data)
 const STATE_CENTROIDS = {
   'Warrap':                 { lat:  8.45, lng: 27.45 },
   'Central Equatoria':      { lat:  4.60, lng: 31.40 },
@@ -57,17 +66,18 @@ let casMarkers   = [];
 let sgbvMarkers  = [];
 let perpMarkers  = [];
 
-// ── Radius from victim count ──────────────────────────────────
+/** Map victim count to circle radius (min 6, max 45). */
 function bubbleRadius(n) {
   if (n <= 0) return 0;
   return Math.max(6, Math.min(45, Math.sqrt(n) * 3.5));
 }
+/** Map SGBV case count to circle radius (min 6, max 35). */
 function sgbvRadius(n) {
   if (n <= 0) return 0;
   return Math.max(6, Math.min(35, Math.sqrt(n) * 5));
 }
 
-// ── Perpetrator → colour ──────────────────────────────────────
+/** Return fill colour (rgba) for perpetrator group (for map circles). */
 function perpFill(p) {
   if (!p) return 'rgba(244,63,94,0.65)';
   const pl = p.toLowerCase();
@@ -76,19 +86,20 @@ function perpFill(p) {
   return 'rgba(52,211,153,0.65)';
 }
 
-// ── Violation → colour ────────────────────────────────────────
+/** Return fill colour (rgba) for violation type (killed/injured/abducted/crsv). */
 function violFill(key) {
   return {killed:'rgba(244,63,94,0.7)', injured:'rgba(251,146,60,0.7)',
           abducted:'rgba(192,132,252,0.7)', crsv:'rgba(52,211,153,0.7)',
           total:'rgba(0,158,219,0.6)'}[key] || 'rgba(0,158,219,0.6)';
 }
 
-// Small offset per perpetrator so multiple circles at same location are visible
+// Offsets to separate multiple markers at same location (lat/lng delta)
 const PERP_OFFSETS = {
   'Community-based Militias':      [0, 0],
   'Conventional Parties':          [0.018, 0.010],
   'Unidentified/Opportunistic':     [-0.018, 0.010],
 };
+/** Get [dLat, dLng] offset for perpetrator when multiple at same location. */
 function offsetForPerp(perp, hasMultiple) {
   if (!hasMultiple) return [0, 0];
   const o = PERP_OFFSETS[perp || 'Unidentified/Opportunistic'];
@@ -97,12 +108,13 @@ function offsetForPerp(perp, hasMultiple) {
 
 // Violation offsets for casualty map (when multiple violation types at same location)
 const VIOL_OFFSETS = { killed:[0,0], injured:[0.018,0.010], abducted:[-0.018,0.010], crsv:[0.012,-0.012] };
+/** Get [dLat, dLng] offset for violation type when multiple at same location. */
 function offsetForViol(viol, hasMultiple) {
   if (!hasMultiple) return [0, 0];
   return VIOL_OFFSETS[viol] || [0, 0];
 }
 
-// Ensure full perpetrator name for display
+/** Return full perpetrator label for popups. */
 function perpFullName(p) {
   if (!p) return 'Unidentified/Opportunistic';
   const pl = (p+'').toLowerCase();
@@ -111,7 +123,7 @@ function perpFullName(p) {
   return 'Unidentified/Opportunistic';
 }
 
-// ── Popup HTML ────────────────────────────────────────────────
+/** Build casualty map popup HTML. */
 function casPopup(loc, violKey) {
   const total   = loc[violKey] || loc.total || 0;
   const locName = [loc.payam, loc.county, loc.state].filter(Boolean).join(' › ');
@@ -127,6 +139,7 @@ function casPopup(loc, violKey) {
     </div>`;
 }
 
+/** Build SGBV map popup HTML. */
 function sgbvPopup(loc) {
   const locName = [loc.county, loc.state].filter(Boolean).join(' › ');
   return `
@@ -134,7 +147,7 @@ function sgbvPopup(loc) {
     <div class="popup-row"><span>SGBV Cases</span><span style="color:#f472b6">${fmt(loc.total||0)}</span></div>`;
 }
 
-// ── Perpetrator popup ────────────────────────────────────────
+/** Build perpetrator map popup HTML. */
 function perpPopup(loc) {
   const locName = [loc.payam, loc.county, loc.state].filter(Boolean).join(' › ');
   const perp = loc.perpetrator || 'Unidentified/Opportunistic';
@@ -148,7 +161,7 @@ function perpPopup(loc) {
     <div class="popup-row"><span>CRSV</span><span style="color:#34d399">${fmt(loc.crsv||0)}</span></div>`;
 }
 
-// ── Build casualty map ────────────────────────────────────────
+/** Initialize casualty map (tiles, boundary, state labels) and call updateCasualtyMap. */
 function buildCasualtyMap() {
   if (casualtyMap) return;
   casualtyMap = L.map('map', { center: MAP_CENTER, zoom: MAP_ZOOM });
@@ -174,7 +187,7 @@ function buildCasualtyMap() {
   updateCasualtyMap();
 }
 
-// ── Update casualty map with filters ─────────────────────────
+/** Rebuild casualty markers from D.q4_locations / D.all_locations, applying quarter/violation/perpetrator filters. */
 function updateCasualtyMap() {
   if (!casualtyMap) { buildCasualtyMap(); return; }
 
@@ -273,7 +286,7 @@ function updateCasualtyMap() {
   }
 }
 
-// ── Build SGBV map ────────────────────────────────────────────
+/** Initialize SGBV map and update markers from D.sgbv.q4_locations / all_locations. */
 function buildSGBVMap() {
   if (sgbvMap) return;
   sgbvMap = L.map('sgbv-map', { center: MAP_CENTER, zoom: MAP_ZOOM });
@@ -299,7 +312,7 @@ function buildSGBVMap() {
   updateSGBVMap();
 }
 
-// ── Update SGBV map ───────────────────────────────────────────
+/** Rebuild SGBV markers; also overlays CRSV from D.q4_locations for quarter. */
 function updateSGBVMap() {
   if (!sgbvMap) { buildSGBVMap(); return; }
 
@@ -422,7 +435,7 @@ function updateSGBVMap() {
   }
 }
 
-// ── Build Perpetrator map ────────────────────────────────────────
+/** Initialize perpetrator map; circles coloured by perpetrator group. */
 function buildPerpetratorMap() {
   if (perpMap) return;
   perpMap = L.map('perp-map', { center: MAP_CENTER, zoom: MAP_ZOOM });
@@ -447,7 +460,7 @@ function buildPerpetratorMap() {
   updatePerpetratorMap();
 }
 
-// ── Update Perpetrator map ───────────────────────────────────────
+/** Rebuild perpetrator markers; group by location × perpetrator with offsets. */
 function updatePerpetratorMap() {
   if (!perpMap) { buildPerpetratorMap(); return; }
 
@@ -557,7 +570,7 @@ function updatePerpetratorMap() {
   }
 }
 
-// ── Map download (PNG + data CSV) ───────────────────────────────────────────
+// Map download helpers: get map instance from wrapper, capture as PNG, export locations as CSV
 function getMapFromWrapper(wrapper) {
   const mapEl = wrapper?.querySelector('#map, #perp-map, #sgbv-map');
   if (!mapEl) return null;

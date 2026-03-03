@@ -1,7 +1,21 @@
 #!/usr/bin/env python3
 """
 UNMISS HRD 2025 Data Extraction Script
-Extracts data from 'Yearly 2025 updates.xlsx' and generates js/data.js
+
+Reads incident data from documents/Yearly 2025 updates.xlsx and generates
+js/data.js — a JavaScript module consumed by the Q4 Violence Dashboard.
+
+Sheets used:
+  - Matrix: Main casualty data (Killed, Injured, Abducted, CRSV) by state,
+    county, payam, gender, perpetrator, quarter.
+  - SGBV: Sexual and gender-based violence cases with service-access indicators
+    (medical care, psychosocial support, reported, arrested, pregnancy).
+  - Yearly casualty trend: Multi-year monthly trend by perpetrator group.
+
+Output: UNMISS_DATA object with q4, quarterly, q4_by_state, q4_by_perpetrator,
+q4_locations, all_locations, sgbv, crsv_sgbv, yearly_trend, etc.
+
+Run: python3 extract_data.py
 """
 import pandas as pd
 import json
@@ -11,7 +25,7 @@ from datetime import datetime
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), 'documents', 'Yearly 2025 updates.xlsx')
 OUTPUT_DIR = os.path.dirname(__file__)
 
-# Brief reference numbers for validation (Draft Q4 Brief)
+# Draft Q4 Brief reference numbers — used to validate extracted data matches published brief
 BRIEF_Q4 = {'total': 830, 'killed': 406, 'injured': 264, 'abducted': 106, 'crsv': 54,
             'male': 591, 'female': 123, 'boys': 56, 'girls': 60, 'sgbv_q4': 58}
 
@@ -27,6 +41,7 @@ MONTHS = ['January','February','March','April','May','June',
           'July','August','September','October','November','December']
 
 def normalize_month(m):
+    """Convert month string to full name (e.g. 'Jan' -> 'January'). Handles NaN and short/long formats."""
     if pd.isna(m): return ''
     m = str(m).strip().capitalize()
     short_map = {'Jan':'January','Feb':'February','Mar':'March','Apr':'April',
@@ -35,11 +50,13 @@ def normalize_month(m):
     return short_map.get(m[:3], m) if len(m) <= 4 else m
 
 def normalize_violation(v):
+    """Normalize Forms of Violations column to: Killed, Injured, Abducted, CRSV."""
     if pd.isna(v): return ''
     v = str(v).strip().lower()
     return {'killed':'Killed','injured':'Injured','abducted':'Abducted','crsv':'CRSV'}.get(v, v.capitalize())
 
 def normalize_quarter(q):
+    """Extract Q1/Q2/Q3/Q4 from quarter string (e.g. 'Q3 2025' -> 'Q3')."""
     if pd.isna(q): return ''
     q = str(q).strip().upper()
     for i in range(1, 5):
@@ -48,6 +65,7 @@ def normalize_quarter(q):
     return ''
 
 def normalize_perp(p):
+    """Map perpetrator text to one of: Community-based Militias, Conventional Parties, Unidentified/Opportunistic."""
     if pd.isna(p): return 'Unidentified/Opportunistic'
     p = str(p).strip().lower()
     if 'community' in p: return 'Community-based Militias'
@@ -55,17 +73,21 @@ def normalize_perp(p):
     return 'Unidentified/Opportunistic'
 
 def normalize_bool(v):
+    """Normalize Yes/No/1/true etc. to 'Yes' or 'No' for SGBV service indicators."""
     if pd.isna(v): return 'Unknown'
     return 'Yes' if str(v).strip().lower() in ['yes','y','1','true'] else 'No'
 
 def int_safe(v):
+    """Safely coerce value to int; return 0 on invalid input."""
     try: return int(v)
     except: return 0
 
-# ── Load Matrix ──────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# LOAD AND NORMALIZE MATRIX SHEET (main casualty data)
+# ═══════════════════════════════════════════════════════════════════════════════
 xl = pd.ExcelFile(EXCEL_PATH)
 df_raw = pd.read_excel(xl, sheet_name='Matrix')
-# Support both 'Yearly 2025 updates.xlsx' (named cols) and legacy format
+# Column mapping: supports both named headers (Yearly 2025 updates) and legacy positional format
 MATRIX_RENAME = {
     'Month of Report': 'month', 'Forms of Violations': 'violation',
     'Total Victims': 'total', 'Male': 'male', 'Female': 'female',
@@ -101,7 +123,9 @@ df = df[df['violation'].isin(VIOLATIONS)]
 df = df[df['quarter'].isin(QUARTERS)]
 df_q4 = df[df['quarter'] == 'Q4'].copy()
 
-# ── SGBV Sheet ────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# LOAD SGBV SHEET (sexual violence cases + service-access indicators)
+# ═══════════════════════════════════════════════════════════════════════════════
 df_sgbv_raw = pd.read_excel(xl, sheet_name='SGBV')
 sg = df_sgbv_raw.copy()
 SGBV_RENAME = {
@@ -144,20 +168,28 @@ MONTH_TO_Q = {m: f'Q{(i//3)+1}' for i,m in enumerate(MONTHS)}
 sg['quarter'] = sg['month'].map(MONTH_TO_Q)
 sg_q4 = sg[sg['quarter'] == 'Q4'].copy()
 
-# ── Yearly Trend Sheet ────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# LOAD YEARLY CASUALTY TREND (multi-year monthly by perpetrator)
+# ═══════════════════════════════════════════════════════════════════════════════
 df_trend = pd.read_excel(xl, sheet_name='Yearly casualty trend')
 
-# ── Helper aggregators ────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# AGGREGATION HELPERS — build summary dicts from filtered DataFrame subsets
+# ═══════════════════════════════════════════════════════════════════════════════
+
 def agg_total(sub):
+    """Sum total victims and per-violation (killed, injured, abducted, crsv) counts."""
     r = {'total': int_safe(sub['total'].sum())}
     for v in VIOLATIONS:
         r[v.lower()] = int_safe(sub[sub['violation']==v]['total'].sum())
     return r
 
 def agg_gender(sub):
+    """Sum male, female, boys, girls victim counts."""
     return {k: int_safe(sub[k].sum()) for k in ['male','female','boys','girls']}
 
 def agg_full(sub):
+    """Full aggregation: total, per-violation, gender, and by_violation_gender breakdown."""
     r = agg_total(sub)
     r['gender'] = agg_gender(sub)
     r['by_violation_gender'] = {
@@ -166,17 +198,19 @@ def agg_full(sub):
     return r
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# BUILD DATA DICTIONARY (output structure for UNMISS_DATA)
+# ═══════════════════════════════════════════════════════════════════════════════
 data = {}
 
-# ── Q4 Overview ───────────────────────────────────────────────────────────────
+# Q4 2025 overview totals and gender breakdown──
 data['q4'] = agg_full(df_q4)
 
-# ── Quarterly Summary ─────────────────────────────────────────────────────────
+# Quarterly summaries (Q1–Q4) for trend charts
 data['quarterly'] = {}
 for q in QUARTERS:
     data['quarterly'][q] = agg_full(df[df['quarter']==q])
 
-# ── Q4 by State ───────────────────────────────────────────────────────────────
+# Q4 totals and breakdowns per state (violations, gender, perpetrator)
 data['q4_by_state'] = {}
 for state in STATES:
     sub = df_q4[df_q4['state']==state]
@@ -187,14 +221,14 @@ for state in STATES:
     d['by_violation_gender'] = {v.lower(): agg_gender(sub[sub['violation']==v]) for v in VIOLATIONS}
     data['q4_by_state'][state] = d
 
-# ── Quarterly by State ────────────────────────────────────────────────────────
+# State totals per quarter (for heatmaps, line charts)
 data['quarterly_by_state'] = {q: {} for q in QUARTERS}
 for q in QUARTERS:
     for state in STATES:
         sub = df[(df['quarter']==q) & (df['state']==state)]
         data['quarterly_by_state'][q][state] = int_safe(sub['total'].sum())
 
-# ── Q4 State × Perpetrator × Violation ───────────────────────────────────────
+# State × Perpetrator × Violation detail (for treemap, heatmaps)
 data['q4_state_perp_detail'] = {}
 for state in STATES:
     data['q4_state_perp_detail'][state] = {}
@@ -206,7 +240,7 @@ for state in STATES:
         }
         data['q4_state_perp_detail'][state][p]['total'] = int_safe(sub_p['total'].sum())
 
-# ── Q4 by Perpetrator ─────────────────────────────────────────────────────────
+# Q4 totals and breakdowns per perpetrator (violations, gender, by state)
 data['q4_by_perpetrator'] = {}
 for p in PERPS:
     sub = df_q4[df_q4['perpetrator']==p]
@@ -216,14 +250,14 @@ for p in PERPS:
     d['by_violation_gender'] = {v.lower(): agg_gender(sub[sub['violation']==v]) for v in VIOLATIONS}
     data['q4_by_perpetrator'][p] = d
 
-# ── Quarterly by Perpetrator ──────────────────────────────────────────────────
+# Perpetrator totals per quarter (for quarterly bar charts)
 data['quarterly_by_perpetrator'] = {q: {} for q in QUARTERS}
 for q in QUARTERS:
     for p in PERPS:
         sub = df[(df['quarter']==q) & (df['perpetrator']==p)]
         data['quarterly_by_perpetrator'][q][p] = int_safe(sub['total'].sum())
 
-# ── Monthly 2025 ──────────────────────────────────────────────────────────────
+# Monthly 2025 totals by violation and perpetrator (for trend line charts)
 data['monthly_2025'] = {}
 for m in MONTHS:
     sub = df[df['month']==m]
@@ -233,7 +267,7 @@ for m in MONTHS:
         d[key] = int_safe(sub[sub['perpetrator']==p]['total'].sum())
     data['monthly_2025'][m] = d
 
-# ── Q4 by County ─────────────────────────────────────────────────────────────
+# Q4 totals by county (with state, gender) — for geographic tables and bars
 data['q4_by_county'] = {}
 for (state, county), sub in df_q4.groupby(['state','county']):
     if county and county.lower() not in ['nan','']:
@@ -242,7 +276,7 @@ for (state, county), sub in df_q4.groupby(['state','county']):
         d['gender'] = agg_gender(sub)
         data['q4_by_county'][county] = d
 
-# ── Q4 by Payam ───────────────────────────────────────────────────────────────
+# Q4 totals by payam (county-level breakdown for sub-state analysis)
 data['q4_by_payam'] = {}
 for (state, county, payam), sub in df_q4.groupby(['state','county','payam']):
     if payam and payam.lower() not in ['nan','']:
@@ -251,7 +285,7 @@ for (state, county, payam), sub in df_q4.groupby(['state','county','payam']):
             'total': int_safe(sub['total'].sum())
         }
 
-# ── Q4 Locations (for map) ────────────────────────────────────────────────────
+# Q4 locations with coordinates — for casualty map markers (grouped by lat/long/state/county/payam/perp)
 locs = df_q4[df_q4['lat'].notna() & df_q4['long'].notna()].copy()
 loc_list = []
 for (lat, lng, state, county, payam, perp), sub in locs.groupby(
@@ -262,7 +296,7 @@ for (lat, lng, state, county, payam, perp), sub in locs.groupby(
     loc_list.append(d)
 data['q4_locations'] = loc_list
 
-# All-year locations (include perpetrator for map coloring)
+# All-year locations (Q1–Q4) for map quarter filter; includes perpetrator for colouring
 all_locs = df[df['lat'].notna() & df['long'].notna()].copy()
 all_locs['perpetrator'] = all_locs['perpetrator'].fillna('Unidentified/Opportunistic')
 all_locs['payam'] = all_locs['payam'].fillna('')
@@ -278,10 +312,11 @@ for (lat, lng, state, county, payam, quarter, perp), sub in all_locs.groupby(
     all_loc_list.append(entry)
 data['all_locations'] = all_loc_list
 
-# ── SGBV ─────────────────────────────────────────────────────────────────────
+# SGBV (Sexual and Gender-Based Violence) aggregates — q4, quarterly, by_state, by_perpetrator, locations
 sgbv = {}
 
 def agg_sgbv_support(sub):
+    """Aggregate SGBV service indicators: yes/no counts for medical_care, psychosocial, reported, arrested, pregnancy."""
     r = {}
     for col in ['medical_care','psychosocial','reported','arrested','pregnancy']:
         vc = sub[col].value_counts().to_dict()
@@ -338,7 +373,7 @@ for (lat, lng, state, county, quarter), sub in sg_all.groupby(
 sgbv['all_locations'] = sgbv_all_loc_list
 data['sgbv'] = sgbv
 
-# ── CRSV vs SGBV ─────────────────────────────────────────────────────────────
+# CRSV (from Matrix) vs SGBV (separate sheet) per quarter — for comparative charts
 data['crsv_sgbv'] = {}
 for q in QUARTERS:
     data['crsv_sgbv'][q] = {
@@ -346,7 +381,7 @@ for q in QUARTERS:
         'sgbv': int_safe(sg[sg['quarter']==q]['total'].sum())
     }
 
-# ── Historical Yearly Trend ───────────────────────────────────────────────────
+# Historical yearly trend (Yearly casualty trend sheet) — year → month → {community, conventional, opportunistic, total}
 yearly = {}
 for _, row in df_trend.iterrows():
     if pd.isna(row.iloc[0]): continue
@@ -362,14 +397,19 @@ for _, row in df_trend.iterrows():
     }
 data['yearly_trend'] = yearly
 
-# ── Write output ──────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# WRITE OUTPUT — generate js/data.js
+# ═══════════════════════════════════════════════════════════════════════════════
 os.makedirs(os.path.join(OUTPUT_DIR, 'js'), exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, 'css'), exist_ok=True)
 os.makedirs(os.path.join(OUTPUT_DIR, 'assets'), exist_ok=True)
 
-output = f"""// UNMISS HRD Q4 2025 – Auto-generated data file
+output = f"""// UNMISS HRD Q4 2025 – Auto-generated data file (do not edit manually)
 // Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-// Source: Yearly 2025 updates.xlsx
+// Source: documents/Yearly 2025 updates.xlsx — run python3 extract_data.py to regenerate
+//
+// Structure: q4, quarterly, q4_by_state, q4_by_perpetrator, q4_by_county, q4_by_payam,
+// q4_locations, all_locations, sgbv, crsv_sgbv, monthly_2025, yearly_trend
 const UNMISS_DATA = {json.dumps(data, indent=2, ensure_ascii=False)};
 """
 
@@ -399,7 +439,7 @@ print(f"\n✅ Quarterly:")
 for q in QUARTERS:
     print(f"   {q}: {data['quarterly'][q]['total']:,} victims")
 
-# ── Brief validation ─────────────────────────────────────────────────────────
+# Compare extracted totals against Draft Q4 Brief reference numbers
 print(f"\n📋 BRIEF VALIDATION (vs Draft Q4 Brief):")
 def check(name, extracted, brief_val):
     m = "✓" if extracted == brief_val else "⚠"
